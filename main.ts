@@ -1,14 +1,13 @@
 ```typescript
-namespace SpriteKind {
-    export const Booster = SpriteKind.create()
-    export const Card = SpriteKind.create()
-    export const Sparkle = SpriteKind.create()
-}
-
 // ============================================================
 // CARD PACK SHOP
-// DRAFT 1
+// DRAFT 1.1
+// Simple MakeCode Arcade version
 // ============================================================
+
+// ------------------------------------------------------------
+// GAME VARIABLES
+// ------------------------------------------------------------
 
 let money = 100
 let packsOpened = 0
@@ -16,95 +15,94 @@ let cardsOwned = 0
 let collectionValue = 0
 
 let currentSet = 0
-let gameScreen = 0
-let collectionCursor = 0
 
-let collection: string[] = []
-let collectionValues: number[] = []
+let collectionNames: string[] = []
 let collectionRarities: string[] = []
+let collectionValues: number[] = []
 let collectionSpecific: boolean[] = []
 
-let lastCardName = ""
-let lastCardRarity = ""
-let lastCardValue = 0
-let lastCardSpecific = false
+let collectionPosition = 0
 
-// ============================================================
+let inCollection = false
+let openingPack = false
+
+// ------------------------------------------------------------
 // SETS
-// ============================================================
+// ------------------------------------------------------------
 
-let setNames = [
+let setNames: string[] = [
     "ASCENDED HEROES",
     "CHAOS RISING",
     "PERFECT ORDER",
     "PITCH BLACK"
 ]
 
-let packPrices = [
+let packPrices: number[] = [
     10,
     12,
     15,
     18
 ]
 
-// ============================================================
+// ------------------------------------------------------------
 // ORIGINAL CARD NAMES
-// ============================================================
+// ------------------------------------------------------------
 
-let setCards = [
-    [
-        "Voltiger",
-        "Aquafox",
-        "Flarewing",
-        "Mossaur",
-        "Stormclaw",
-        "Thunder Rex",
-        "Ocean Drake",
-        "Solar Lion",
-        "Hero Voltiger",
-        "Voltiger EX"
-    ],
-    [
-        "Flamefang",
-        "Aqua Titan",
-        "Leafclaw",
-        "Thunderpaw",
-        "Rockhorn",
-        "Inferno Rex",
-        "Chaos Drake",
-        "Raging Lion",
-        "Chaos Fang EX",
-        "Mega Chaos Rex"
-    ],
-    [
-        "Orderfox",
-        "Starclaw",
-        "Aquadon",
-        "Flare Rex",
-        "Leafwing",
-        "Cosmic Drake",
-        "Royal Titan",
-        "Celestial Lion",
-        "Perfect Order EX",
-        "Mega Order Rex"
-    ],
-    [
-        "Shadowfang",
-        "Nightfox",
-        "Voidwing",
-        "Darkclaw",
-        "Riftpaw",
-        "Shadow Drake",
-        "Abyss Rex",
-        "Phantom Lion",
-        "Rift Titan EX",
-        "Mega Hyperion"
-    ]
+let cards0: string[] = [
+    "Voltiger",
+    "Aquafox",
+    "Flarewing",
+    "Mossaur",
+    "Stormclaw",
+    "Thunder Rex",
+    "Ocean Drake",
+    "Solar Lion",
+    "Hero Voltiger",
+    "Voltiger EX"
 ]
 
-// ============================================================
+let cards1: string[] = [
+    "Flamefang",
+    "Aqua Titan",
+    "Leafclaw",
+    "Thunderpaw",
+    "Rockhorn",
+    "Inferno Rex",
+    "Chaos Drake",
+    "Raging Lion",
+    "Chaos Fang EX",
+    "Mega Chaos Rex"
+]
+
+let cards2: string[] = [
+    "Orderfox",
+    "Starclaw",
+    "Aquadon",
+    "Flare Rex",
+    "Leafwing",
+    "Cosmic Drake",
+    "Royal Titan",
+    "Celestial Lion",
+    "Perfect Order EX",
+    "Mega Order Rex"
+]
+
+let cards3: string[] = [
+    "Shadowfang",
+    "Nightfox",
+    "Voidwing",
+    "Darkclaw",
+    "Riftpaw",
+    "Shadow Drake",
+    "Abyss Rex",
+    "Phantom Lion",
+    "Rift Titan EX",
+    "Mega Hyperion"
+]
+
+// ------------------------------------------------------------
 // RARITIES
-// ============================================================
+// ------------------------------------------------------------
 
 let COMMON = "COMMON"
 let UNCOMMON = "UNCOMMON"
@@ -114,39 +112,78 @@ let IR = "ILLUSTRATION RARE"
 let SIR = "SPECIAL ILLUSTRATION"
 let MHR = "MEGA HYPER RARE"
 
-// ============================================================
-// START
-// ============================================================
+// ------------------------------------------------------------
+// START GAME
+// ------------------------------------------------------------
 
 scene.setBackgroundColor(9)
 
 game.splash(
     "CARD PACK SHOP",
-    "OPEN • COLLECT • SELL"
+    "COLLECT • TRADE • SELL"
 )
 
 showHome()
 
 // ============================================================
-// HOME
+// HOME SCREEN
 // ============================================================
 
 function showHome() {
-    gameScreen = 0
+    inCollection = false
+    openingPack = false
+
     scene.setBackgroundColor(9)
 
     game.showLongText(
         "CARD PACK SHOP\n\n" +
-        "CASH: $" + money +
-        "\n\n" +
-        "SET: " + setNames[currentSet] +
-        "\nPACK: $" + packPrices[currentSet] +
-        "\n\n" +
+        "CASH: $" + money + "\n\n" +
+        "SET:\n" + setNames[currentSet] + "\n\n" +
+        "PACK: $" + packPrices[currentSet] + "\n\n" +
         "A = OPEN PACK\n" +
-        "LEFT/RIGHT = SET\n" +
+        "LEFT / RIGHT = SET\n" +
         "B = COLLECTION\n" +
-        "MENU = SHOP / ODDS",
+        "MENU = ODDS & STATS",
         DialogLayout.Full
+    )
+}
+
+// ============================================================
+// CHANGE SET
+// ============================================================
+
+controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
+    if (openingPack || inCollection) {
+        return
+    }
+
+    currentSet = currentSet - 1
+
+    if (currentSet < 0) {
+        currentSet = 3
+    }
+
+    showSet()
+})
+
+controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
+    if (openingPack || inCollection) {
+        return
+    }
+
+    currentSet = currentSet + 1
+
+    if (currentSet > 3) {
+        currentSet = 0
+    }
+
+    showSet()
+})
+
+function showSet() {
+    game.splash(
+        setNames[currentSet],
+        "PACK PRICE: $" + packPrices[currentSet]
     )
 }
 
@@ -155,76 +192,30 @@ function showHome() {
 // ============================================================
 
 controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
-
-    if (gameScreen != 0) {
+    if (inCollection || openingPack) {
         return
     }
 
     if (money < packPrices[currentSet]) {
-
         game.splash(
-            "NOT ENOUGH CASH!",
+            "NOT ENOUGH CASH",
             "Need $" + packPrices[currentSet]
         )
-
         return
     }
 
-    money -= packPrices[currentSet]
+    money = money - packPrices[currentSet]
 
-    packsOpened += 1
+    packsOpened = packsOpened + 1
 
     openPack()
 })
 
 // ============================================================
-// CHANGE SET
-// ============================================================
-
-controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
-
-    if (gameScreen != 0) {
-        return
-    }
-
-    currentSet -= 1
-
-    if (currentSet < 0) {
-        currentSet = setNames.length - 1
-    }
-
-    showSet()
-})
-
-controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
-
-    if (gameScreen != 0) {
-        return
-    }
-
-    currentSet += 1
-
-    if (currentSet >= setNames.length) {
-        currentSet = 0
-    }
-
-    showSet()
-})
-
-function showSet() {
-
-    game.splash(
-        setNames[currentSet],
-        "PACK $" + packPrices[currentSet]
-    )
-}
-
-// ============================================================
 // BOOSTER PACK PIXEL ART
 // ============================================================
 
-function makeBooster(): Sprite {
-
+function createBooster(): Sprite {
     let pack = sprites.create(img`
         . . . . . . . . . . . . . . . .
         . . . 2 2 2 2 2 2 2 2 2 2 . . .
@@ -238,11 +229,11 @@ function makeBooster(): Sprite {
         . . 2 4 5 5 5 5 5 5 5 5 4 2 . .
         . . 2 4 4 5 5 5 5 5 5 4 4 2 . .
         . . 2 4 4 4 4 4 4 4 4 4 4 2 . .
-        . . 2 4 4 4 4 4 4 4 4 4 2 . .
-        . . 2 4 4 4 4 4 4 4 4 4 2 . .
-        . . 2 2 2 2 2 2 2 2 2 2 2 . .
+        . . 2 4 4 4 4 4 4 4 4 4 4 2 . .
+        . . 2 4 4 4 4 4 4 4 4 4 4 2 . .
+        . . 2 2 2 2 2 2 2 2 2 2 2 2 . .
         . . . . . . . . . . . . . . . .
-    `, SpriteKind.Booster)
+    `, SpriteKind.Player)
 
     pack.setPosition(80, 60)
 
@@ -250,54 +241,44 @@ function makeBooster(): Sprite {
 }
 
 // ============================================================
-// CRINKLE
+// PACK CRINKLE
 // ============================================================
 
 function crinkle(pack: Sprite) {
-
     music.playTone(220, 60)
-
-    pack.x -= 5
+    pack.x = 75
     pause(60)
 
     music.playTone(280, 60)
-
-    pack.x += 10
+    pack.x = 85
     pause(60)
 
     music.playTone(220, 60)
-
-    pack.x -= 10
+    pack.x = 75
     pause(60)
 
     music.playTone(330, 60)
-
-    pack.x += 10
+    pack.x = 85
     pause(60)
 
     music.playTone(260, 60)
+    pack.x = 80
+    pause(80)
 
-    pack.x -= 5
-    pause(60)
+    pack.y = 55
+    pause(50)
 
-    // Vertical crinkle
-    pack.y -= 4
-    pause(60)
+    pack.y = 65
+    pause(50)
 
-    pack.y += 8
-    pause(60)
-
-    pack.y -= 4
-
-    pause(100)
+    pack.y = 60
 }
 
 // ============================================================
-// TEAR
+// PACK TEAR
 // ============================================================
 
 function tearPack(pack: Sprite) {
-
     music.playTone(440, 70)
     pause(70)
 
@@ -307,37 +288,17 @@ function tearPack(pack: Sprite) {
     music.playTone(660, 70)
     pause(70)
 
-    music.playTone(880, 100)
+    music.playTone(880, 120)
 
     pack.destroy()
-
-    // Sparkles
-    for (let i = 0; i < 10; i++) {
-
-        let sparkle = sprites.create(img`
-            . . 5 . .
-            . 5 5 5 .
-            5 5 5 5 5
-            . 5 5 5 .
-            . . 5 . .
-        `, SpriteKind.Sparkle)
-
-        sparkle.setPosition(
-            randint(25, 135),
-            randint(25, 95)
-        )
-
-        sparkle.lifespan = 500
-    }
 }
 
 // ============================================================
-// OPEN PACK
+// OPENING SEQUENCE
 // ============================================================
 
 function openPack() {
-
-    gameScreen = 1
+    openingPack = true
 
     scene.setBackgroundColor(1)
 
@@ -346,13 +307,13 @@ function openPack() {
         "GET READY!"
     )
 
-    let pack = makeBooster()
+    let pack = createBooster()
 
     pause(500)
 
     game.splash(
-        "CRINKLE!",
-        "Shake the pack..."
+        "CRINKLE...",
+        "CRINKLE..."
     )
 
     crinkle(pack)
@@ -361,153 +322,160 @@ function openPack() {
 
     game.splash(
         "RIP!",
-        "OPENING!"
+        "PACK OPEN!"
     )
 
     tearPack(pack)
 
-    pause(500)
+    pause(400)
 
-    game.splash(
-        "5 CARDS!",
-        "GOOD LUCK!"
-    )
-
-    // Reveal cards
-    for (let i = 0; i < 5; i++) {
-
-        revealCard(i + 1)
-
-        pause(500)
+    for (let cardNumber = 1; cardNumber <= 5; cardNumber++) {
+        revealCard(cardNumber)
+        pause(400)
     }
 
-    gameScreen = 0
+    openingPack = false
 
     game.splash(
         "PACK COMPLETE!",
-        "CASH: $" + money
+        "CARDS: " + cardsOwned
     )
 
     showHome()
 }
 
 // ============================================================
-// RARITY SYSTEM
+// ONE-IN-X ROLL
+// ============================================================
+
+function oneIn(denominator: number): boolean {
+    return randint(1, denominator) == 1
+}
+
+// ============================================================
+// SIR ANY RATE
+// ============================================================
+
+function sirAnyRate(): number {
+    if (currentSet == 0) {
+        return 70
+    }
+
+    if (currentSet == 1) {
+        return 83
+    }
+
+    if (currentSet == 2) {
+        return 81
+    }
+
+    return randint(80, 125)
+}
+
+// ============================================================
+// SIR SPECIFIC RATE
+// ============================================================
+
+function sirSpecificRate(): number {
+    if (currentSet == 0) {
+        return 1533
+    }
+
+    if (currentSet == 1) {
+        return 496
+    }
+
+    if (currentSet == 2) {
+        return 487
+    }
+
+    return randint(480, 750)
+}
+
+// ============================================================
+// MHR ANY RATE
+// ============================================================
+
+function mhrAnyRate(): number {
+    if (currentSet == 0) {
+        return 540
+    }
+
+    if (currentSet == 1) {
+        return 956
+    }
+
+    if (currentSet == 2) {
+        return 1786
+    }
+
+    return randint(1260, 1370)
+}
+
+// ============================================================
+// MHR SPECIFIC RATE
+// ============================================================
+
+function mhrSpecificRate(): number {
+    if (currentSet == 0) {
+        return 1080
+    }
+
+    if (currentSet == 1) {
+        return 956
+    }
+
+    if (currentSet == 2) {
+        return 1786
+    }
+
+    return randint(1260, 1370)
+}
+
+// ============================================================
+// DETERMINE RARITY
 //
-// We use a 1,000,000 roll.
+// Specific is treated as a subset of the corresponding
+// "Any" rarity. This prevents double-counting.
 //
-// Specific SIR/MHR are carved out of the "Any" category,
-// so they are NOT double-counted.
+// Example:
+// Ascended Heroes SIR Any = 1/70
+// Ascended Heroes SIR Specific = 1/1533
+//
+// First we determine whether the card is an SIR.
+// Then we determine whether that SIR is the specific chase.
 // ============================================================
 
 function determineRarity(): string {
+    let sirRate = sirAnyRate()
+    let mhrRate = mhrAnyRate()
 
-    let roll = randint(1, 1000000)
-
-    // ------------------------------------------
     // MHR
-    // ------------------------------------------
-
-    let mhrSpecificRate = 0
-    let mhrAnyRate = 0
-
-    if (currentSet == 0) {
-        mhrSpecificRate = 926
-        mhrAnyRate = 1852
-    }
-
-    if (currentSet == 1) {
-        mhrSpecificRate = 1046
-        mhrAnyRate = 1046
-    }
-
-    if (currentSet == 2) {
-        mhrSpecificRate = 560
-        mhrAnyRate = 560
-    }
-
-    if (currentSet == 3) {
-        let denominator = randint(1260, 1370)
-
-        mhrSpecificRate = Math.idiv(1000000, denominator)
-        mhrAnyRate = mhrSpecificRate
-    }
-
-    if (roll <= mhrSpecificRate) {
-        lastCardSpecific = true
+    if (oneIn(mhrRate)) {
         return MHR
     }
 
-    if (roll <= mhrAnyRate) {
-        lastCardSpecific = false
-        return MHR
-    }
-
-    // ------------------------------------------
     // SIR
-    // ------------------------------------------
-
-    let sirSpecificRate = 0
-    let sirAnyRate = 0
-
-    if (currentSet == 0) {
-        sirSpecificRate = 652
-        sirAnyRate = 14285
-    }
-
-    if (currentSet == 1) {
-        sirSpecificRate = 2016
-        sirAnyRate = 12048
-    }
-
-    if (currentSet == 2) {
-        sirSpecificRate = 2053
-        sirAnyRate = 12345
-    }
-
-    if (currentSet == 3) {
-
-        let denominator = randint(480, 750)
-
-        sirSpecificRate =
-            Math.idiv(1000000, denominator)
-
-        let anyDenominator =
-            randint(80, 125)
-
-        sirAnyRate =
-            Math.idiv(1000000, anyDenominator)
-    }
-
-    if (roll <= sirSpecificRate) {
-        lastCardSpecific = true
+    if (oneIn(sirRate)) {
         return SIR
     }
 
-    if (roll <= sirAnyRate) {
-        lastCardSpecific = false
-        return SIR
-    }
+    // Other cards
+    let roll = randint(1, 100)
 
-    // ------------------------------------------
-    // OTHER RARITIES
-    // ------------------------------------------
-
-    let commonRoll = randint(1, 100)
-
-    if (commonRoll <= 5) {
+    if (roll <= 5) {
         return ULTRA
     }
 
-    if (commonRoll <= 15) {
+    if (roll <= 15) {
         return IR
     }
 
-    if (commonRoll <= 35) {
+    if (roll <= 35) {
         return RARE
     }
 
-    if (commonRoll <= 65) {
+    if (roll <= 65) {
         return UNCOMMON
     }
 
@@ -515,97 +483,160 @@ function determineRarity(): string {
 }
 
 // ============================================================
-// CARD REVEAL
+// DETERMINE SPECIFIC CHASE
+//
+// Because "Specific" is part of "Any", we calculate the
+// conditional chance after an Any hit.
+//
+// Example:
+// 1/70 SIR Any
+// 1/1533 SIR Specific
+//
+// Conditional chance ≈ 70 / 1533.
 // ============================================================
 
-function revealCard(number: number) {
+function isSpecific(rarity: string): boolean {
+    if (rarity == SIR) {
+        let anyRate = sirAnyRate()
+        let specificRate = sirSpecificRate()
 
-    lastCardSpecific = false
+        // 1 in (specific / any)
+        let conditionalRate = Math.floor(
+            specificRate / anyRate
+        )
 
-    let rarity = determineRarity()
+        if (conditionalRate < 1) {
+            conditionalRate = 1
+        }
 
-    let name = chooseCard(
-        rarity,
-        lastCardSpecific
-    )
+        return oneIn(conditionalRate)
+    }
 
-    let value = getValue(
-        rarity,
-        lastCardSpecific
-    )
+    if (rarity == MHR) {
+        let anyRate = mhrAnyRate()
+        let specificRate = mhrSpecificRate()
 
-    lastCardName = name
-    lastCardRarity = rarity
-    lastCardValue = value
+        let conditionalRate = Math.floor(
+            specificRate / anyRate
+        )
 
-    collection.push(name)
-    collectionValues.push(value)
-    collectionRarities.push(rarity)
-    collectionSpecific.push(lastCardSpecific)
+        if (conditionalRate < 1) {
+            conditionalRate = 1
+        }
 
-    cardsOwned += 1
-    collectionValue += value
+        return oneIn(conditionalRate)
+    }
 
-    displayCard(
-        name,
-        rarity,
-        value,
-        lastCardSpecific,
-        number
-    )
+    return false
 }
 
 // ============================================================
-// CHOOSE CARD
+// GET CARD NAME
 // ============================================================
 
-function chooseCard(
+function getCardName(
     rarity: string,
     specific: boolean
 ): string {
 
-    let cards = setCards[currentSet]
+    let result = ""
 
-    if (rarity == MHR && specific) {
-        return cards[9]
+    if (currentSet == 0) {
+        if (rarity == MHR && specific) {
+            result = cards0[9]
+        } else if (rarity == MHR) {
+            result = cards0[8]
+        } else if (rarity == SIR && specific) {
+            result = cards0[8]
+        } else if (rarity == SIR) {
+            result = cards0[randint(6, 8)]
+        } else if (rarity == IR) {
+            result = cards0[randint(5, 8)]
+        } else if (rarity == ULTRA) {
+            result = cards0[randint(5, 7)]
+        } else if (rarity == RARE) {
+            result = cards0[randint(3, 7)]
+        } else if (rarity == UNCOMMON) {
+            result = cards0[randint(1, 5)]
+        } else {
+            result = cards0[randint(0, 4)]
+        }
     }
 
-    if (rarity == MHR) {
-        return cards[8]
+    if (currentSet == 1) {
+        if (rarity == MHR && specific) {
+            result = cards1[9]
+        } else if (rarity == MHR) {
+            result = cards1[8]
+        } else if (rarity == SIR && specific) {
+            result = cards1[8]
+        } else if (rarity == SIR) {
+            result = cards1[randint(6, 8)]
+        } else if (rarity == IR) {
+            result = cards1[randint(5, 8)]
+        } else if (rarity == ULTRA) {
+            result = cards1[randint(5, 7)]
+        } else if (rarity == RARE) {
+            result = cards1[randint(3, 7)]
+        } else if (rarity == UNCOMMON) {
+            result = cards1[randint(1, 5)]
+        } else {
+            result = cards1[randint(0, 4)]
+        }
     }
 
-    if (rarity == SIR && specific) {
-        return cards[8]
+    if (currentSet == 2) {
+        if (rarity == MHR && specific) {
+            result = cards2[9]
+        } else if (rarity == MHR) {
+            result = cards2[8]
+        } else if (rarity == SIR && specific) {
+            result = cards2[8]
+        } else if (rarity == SIR) {
+            result = cards2[randint(6, 8)]
+        } else if (rarity == IR) {
+            result = cards2[randint(5, 8)]
+        } else if (rarity == ULTRA) {
+            result = cards2[randint(5, 7)]
+        } else if (rarity == RARE) {
+            result = cards2[randint(3, 7)]
+        } else if (rarity == UNCOMMON) {
+            result = cards2[randint(1, 5)]
+        } else {
+            result = cards2[randint(0, 4)]
+        }
     }
 
-    if (rarity == SIR) {
-        return cards[randint(6, 8)]
+    if (currentSet == 3) {
+        if (rarity == MHR && specific) {
+            result = cards3[9]
+        } else if (rarity == MHR) {
+            result = cards3[8]
+        } else if (rarity == SIR && specific) {
+            result = cards3[8]
+        } else if (rarity == SIR) {
+            result = cards3[randint(6, 8)]
+        } else if (rarity == IR) {
+            result = cards3[randint(5, 8)]
+        } else if (rarity == ULTRA) {
+            result = cards3[randint(5, 7)]
+        } else if (rarity == RARE) {
+            result = cards3[randint(3, 7)]
+        } else if (rarity == UNCOMMON) {
+            result = cards3[randint(1, 5)]
+        } else {
+            result = cards3[randint(0, 4)]
+        }
     }
 
-    if (rarity == IR) {
-        return cards[randint(5, 8)]
-    }
-
-    if (rarity == ULTRA) {
-        return cards[randint(5, 7)]
-    }
-
-    if (rarity == RARE) {
-        return cards[randint(3, 7)]
-    }
-
-    if (rarity == UNCOMMON) {
-        return cards[randint(1, 5)]
-    }
-
-    return cards[randint(0, 4)]
+    return result
 }
 
 // ============================================================
-// CARD VALUES
+// CARD VALUE
 // ============================================================
 
-function getValue(
+function getCardValue(
     rarity: string,
     specific: boolean
 ): number {
@@ -631,7 +662,6 @@ function getValue(
     }
 
     if (rarity == SIR) {
-
         if (specific) {
             return randint(150, 300)
         }
@@ -640,7 +670,6 @@ function getValue(
     }
 
     if (rarity == MHR) {
-
         if (specific) {
             return randint(400, 800)
         }
@@ -652,15 +681,42 @@ function getValue(
 }
 
 // ============================================================
-// CARD REVEAL SCREEN
+// REVEAL CARD
 // ============================================================
 
-function displayCard(
+function revealCard(number: number) {
+    let rarity = determineRarity()
+    let specific = isSpecific(rarity)
+    let name = getCardName(rarity, specific)
+    let value = getCardValue(rarity, specific)
+
+    collectionNames.push(name)
+    collectionRarities.push(rarity)
+    collectionValues.push(value)
+    collectionSpecific.push(specific)
+
+    cardsOwned = cardsOwned + 1
+    collectionValue = collectionValue + value
+
+    showCard(
+        number,
+        name,
+        rarity,
+        value,
+        specific
+    )
+}
+
+// ============================================================
+// CARD DISPLAY
+// ============================================================
+
+function showCard(
+    number: number,
     name: string,
     rarity: string,
     value: number,
-    specific: boolean,
-    number: number
+    specific: boolean
 ) {
 
     let background = 1
@@ -695,75 +751,44 @@ function displayCard(
 
     scene.setBackgroundColor(background)
 
-    // ------------------------------------------
-    // Rare card animation
-    // ------------------------------------------
-
     if (rarity == IR ||
         rarity == SIR ||
         rarity == MHR) {
 
-        for (let i = 0; i < 3; i++) {
+        music.playTone(392, 80)
+        pause(70)
 
-            music.playTone(
-                392 + i * 120,
-                100
-            )
+        music.playTone(523, 80)
+        pause(70)
 
-            pause(80)
-        }
+        music.playTone(659, 100)
     }
-
-    // ------------------------------------------
-    // MHR special effect
-    // ------------------------------------------
 
     if (rarity == MHR) {
-
-        for (let i = 0; i < 12; i++) {
-
-            let sparkle = sprites.create(img`
-                . . 5 . .
-                . 5 5 5 .
-                5 5 5 5 5
-                . 5 5 5 .
-                . . 5 . .
-            `, SpriteKind.Sparkle)
-
-            sparkle.setPosition(
-                randint(15, 145),
-                randint(15, 105)
-            )
-
-            sparkle.lifespan = 700
-        }
-
-        music.playMelody(
-            "C5 E5 G5 C6",
-            180
-        )
+        music.playTone(784, 150)
+        pause(100)
+        music.playTone(988, 200)
     }
 
-    // ------------------------------------------
-    // Chase message
-    // ------------------------------------------
-
-    let extra = ""
+    let message = ""
 
     if (specific) {
-        extra = "\n\n*** CHASE HIT! ***"
+        message =
+            "CARD " + number + " / 5\n\n" +
+            name + "\n\n" +
+            rarity + "\n\n" +
+            "VALUE: $" + value +
+            "\n\n*** CHASE HIT! ***"
+    } else {
+        message =
+            "CARD " + number + " / 5\n\n" +
+            name + "\n\n" +
+            rarity + "\n\n" +
+            "VALUE: $" + value
     }
 
     game.showLongText(
-        "CARD " +
-        number +
-        " / 5\n\n" +
-        name +
-        "\n\n" +
-        rarity +
-        "\n\nVALUE: $" +
-        value +
-        extra,
+        message,
         DialogLayout.Full
     )
 }
@@ -773,8 +798,13 @@ function displayCard(
 // ============================================================
 
 controller.B.onEvent(ControllerButtonEvent.Pressed, function () {
+    if (openingPack) {
+        return
+    }
 
-    if (gameScreen != 0) {
+    if (inCollection) {
+        inCollection = false
+        showHome()
         return
     }
 
@@ -783,85 +813,91 @@ controller.B.onEvent(ControllerButtonEvent.Pressed, function () {
 
 function openCollection() {
 
-    if (collection.length == 0) {
-
+    if (collectionNames.length == 0) {
         game.splash(
             "COLLECTION EMPTY",
-            "Open a pack!"
+            "Open a pack first!"
         )
-
         return
     }
 
-    gameScreen = 2
-    collectionCursor = collection.length - 1
+    inCollection = true
+    collectionPosition = collectionNames.length - 1
 
     showCollectionCard()
 }
 
 // ============================================================
-// SHOW SELECTED COLLECTION CARD
+// COLLECTION CARD
 // ============================================================
 
 function showCollectionCard() {
 
-    scene.setBackgroundColor(9)
+    let name = collectionNames[collectionPosition]
+    let rarity = collectionRarities[collectionPosition]
+    let value = collectionValues[collectionPosition]
 
-    let name = collection[collectionCursor]
-    let rarity = collectionRarities[collectionCursor]
-    let value = collectionValues[collectionCursor]
+    let message = ""
 
-    let chaseText = ""
-
-    if (collectionSpecific[collectionCursor]) {
-        chaseText = "\n*** CHASE CARD ***"
+    if (collectionSpecific[collectionPosition]) {
+        message =
+            "COLLECTION\n\n" +
+            name + "\n\n" +
+            rarity + "\n\n" +
+            "VALUE: $" + value +
+            "\n\n*** CHASE CARD ***\n\n" +
+            "UP/DOWN = BROWSE\n" +
+            "A = SELL\n" +
+            "B = BACK"
+    } else {
+        message =
+            "COLLECTION\n\n" +
+            name + "\n\n" +
+            rarity + "\n\n" +
+            "VALUE: $" + value +
+            "\n\n" +
+            "UP/DOWN = BROWSE\n" +
+            "A = SELL\n" +
+            "B = BACK"
     }
 
     game.showLongText(
-        "COLLECTION\n\n" +
-        name +
-        "\n\n" +
-        rarity +
-        "\nVALUE: $" +
-        value +
-        chaseText +
-        "\n\n" +
-        "UP/DOWN = BROWSE\n" +
-        "A = SELL\n" +
-        "B = BACK",
+        message,
         DialogLayout.Full
     )
 }
 
 // ============================================================
-// COLLECTION NAVIGATION
+// COLLECTION UP
 // ============================================================
 
 controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
-
-    if (gameScreen != 2) {
+    if (!inCollection) {
         return
     }
 
-    collectionCursor += 1
+    collectionPosition = collectionPosition + 1
 
-    if (collectionCursor >= collection.length) {
-        collectionCursor = 0
+    if (collectionPosition >= collectionNames.length) {
+        collectionPosition = 0
     }
 
     showCollectionCard()
 })
 
-controller.down.onEvent(ControllerButtonEvent.Pressed, function () {
+// ============================================================
+// COLLECTION DOWN
+// ============================================================
 
-    if (gameScreen != 2) {
+controller.down.onEvent(ControllerButtonEvent.Pressed, function () {
+    if (!inCollection) {
         return
     }
 
-    collectionCursor -= 1
+    collectionPosition = collectionPosition - 1
 
-    if (collectionCursor < 0) {
-        collectionCursor = collection.length - 1
+    if (collectionPosition < 0) {
+        collectionPosition = collectionNames.length - 1
     }
 
     showCollectionCard()
@@ -873,49 +909,43 @@ controller.down.onEvent(ControllerButtonEvent.Pressed, function () {
 
 function sellSelectedCard() {
 
-    if (collection.length == 0) {
+    if (collectionNames.length == 0) {
         return
     }
 
-    let name = collection[collectionCursor]
-    let value = collectionValues[collectionCursor]
+    let name = collectionNames[collectionPosition]
+    let value = collectionValues[collectionPosition]
 
     let answer = game.ask(
-        "SELL " +
-        name +
-        " FOR $" +
-        value +
-        "?"
+        "SELL " + name +
+        " FOR $" + value + "?"
     )
 
     if (answer) {
 
-        money += value
-        collectionValue -= value
+        money = money + value
+        collectionValue = collectionValue - value
+        cardsOwned = cardsOwned - 1
 
-        collection.removeAt(collectionCursor)
-        collectionValues.removeAt(collectionCursor)
-        collectionRarities.removeAt(collectionCursor)
-        collectionSpecific.removeAt(collectionCursor)
+        collectionNames.removeAt(collectionPosition)
+        collectionRarities.removeAt(collectionPosition)
+        collectionValues.removeAt(collectionPosition)
+        collectionSpecific.removeAt(collectionPosition)
 
-        cardsOwned -= 1
-
-        if (collection.length == 0) {
-
-            gameScreen = 0
+        if (collectionNames.length == 0) {
+            inCollection = false
 
             game.splash(
                 "COLLECTION EMPTY",
-                "Cash: $" + money
+                "CASH: $" + money
             )
 
             showHome()
-
             return
         }
 
-        if (collectionCursor >= collection.length) {
-            collectionCursor = collection.length - 1
+        if (collectionPosition >= collectionNames.length) {
+            collectionPosition = collectionNames.length - 1
         }
 
         game.splash(
@@ -928,97 +958,77 @@ function sellSelectedCard() {
 }
 
 // ============================================================
-// A = SELL WHEN IN COLLECTION
+// A IN COLLECTION = SELL
 // ============================================================
 
 controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
-
-    if (gameScreen == 2) {
-        sellSelectedCard()
-    }
-})
-
-// ============================================================
-// B = EXIT COLLECTION
-// ============================================================
-
-controller.B.onEvent(ControllerButtonEvent.Pressed, function () {
-
-    if (gameScreen == 2) {
-
-        gameScreen = 0
-
-        showHome()
-    }
-})
-
-// ============================================================
-// MENU = SHOP / STATS
-// ============================================================
-
-controller.menu.onEvent(ControllerButtonEvent.Pressed, function () {
-
-    if (gameScreen != 0) {
+    if (!inCollection) {
         return
     }
 
-    game.showLongText(
-        "SHOP & STATS\n\n" +
-        "CASH: $" + money +
-        "\nPACKS OPENED: " + packsOpened +
-        "\nCARDS: " + cardsOwned +
-        "\nCOLLECTION: $" + collectionValue +
-        "\n\nCURRENT SET:\n" +
-        setNames[currentSet] +
-        "\nPACK: $" +
-        packPrices[currentSet] +
-        "\n\n" +
-        getHitRateText(),
-        DialogLayout.Full
-    )
+    sellSelectedCard()
 })
 
 // ============================================================
-// HIT RATE TEXT
+// MENU = ODDS + STATS
 // ============================================================
 
-function getHitRateText(): string {
+controller.menu.onEvent(ControllerButtonEvent.Pressed, function () {
+    if (openingPack || inCollection) {
+        return
+    }
+
+    showStats()
+})
+
+function showStats() {
+
+    let odds = ""
 
     if (currentSet == 0) {
-
-        return (
+        odds =
             "SIR ANY: 1/70\n" +
             "SIR SPECIFIC: 1/1533\n" +
             "MHR ANY: 1/540\n" +
             "MHR SPECIFIC: 1/1080"
-        )
     }
 
     if (currentSet == 1) {
-
-        return (
+        odds =
             "SIR ANY: 1/83\n" +
             "SIR SPECIFIC: 1/496\n" +
             "MHR ANY: 1/956\n" +
             "MHR SPECIFIC: 1/956"
-        )
     }
 
     if (currentSet == 2) {
-
-        return (
+        odds =
             "SIR ANY: 1/81\n" +
             "SIR SPECIFIC: 1/487\n" +
             "MHR ANY: 1/1786\n" +
             "MHR SPECIFIC: 1/1786"
-        )
     }
 
-    return (
-        "SIR ANY: ~1/80-125\n" +
-        "SIR SPECIFIC: ~1/480-750\n" +
-        "MHR ANY: ~1/1260-1370\n" +
-        "MHR SPECIFIC: ~1/1260-1370"
+    if (currentSet == 3) {
+        odds =
+            "SIR ANY: ~1/80-125\n" +
+            "SIR SPECIFIC: ~1/480-750\n" +
+            "MHR ANY: ~1/1260-1370\n" +
+            "MHR SPECIFIC: ~1/1260-1370"
+    }
+
+    game.showLongText(
+        "SHOP STATS\n\n" +
+        "CASH: $" + money + "\n" +
+        "PACKS: " + packsOpened + "\n" +
+        "CARDS: " + cardsOwned + "\n" +
+        "COLLECTION: $" + collectionValue +
+        "\n\n" +
+        setNames[currentSet] +
+        "\nPACK: $" + packPrices[currentSet] +
+        "\n\n" +
+        odds,
+        DialogLayout.Full
     )
 }
 ```
