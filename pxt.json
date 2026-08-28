@@ -1,0 +1,14 @@
+{
+    "name": "card-pack-shop",
+    "description": "A pixel-art card pack opening and collecting game.",
+    "dependencies": {
+        "device": "*"
+    },
+    "files": [
+        "main.ts"
+    ],
+    "preferredEditor": "tsprj",
+    "supportedTargets": [
+        "arcade"
+    ]
+}
