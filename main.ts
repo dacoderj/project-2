@@ -2,6 +2,7 @@
 namespace SpriteKind {
     export const Booster = SpriteKind.create()
     export const Card = SpriteKind.create()
+    export const Sparkle = SpriteKind.create()
 }
 
 // ============================================================
@@ -15,17 +16,17 @@ let collectionValue = 0
 
 let currentSet = 0
 
-let currentCardName = ""
-let currentCardRarity = ""
-let currentCardValue = 0
-let currentCardIsSpecific = false
-
 let collection: string[] = []
 let collectionValues: number[] = []
 let collectionRarities: string[] = []
 
+let lastCardName = ""
+let lastCardRarity = ""
+let lastCardValue = 0
+let lastCardSpecific = false
+
 // ============================================================
-// SETS
+// SET INFORMATION
 // ============================================================
 
 let setNames = [
@@ -43,35 +44,8 @@ let packPrices = [
 ]
 
 // ============================================================
-// HIT RATES
-//
-// SIR ANY:
-// Ascended Heroes = 1/70
-// Chaos Rising   = 1/83
-// Perfect Order  = 1/81
-// Pitch Black    = approximately 1/80-125
-//
-// SIR SPECIFIC:
-// Ascended Heroes = 1/1533
-// Chaos Rising   = 1/496
-// Perfect Order  = 1/487
-// Pitch Black    = approximately 1/480-750
-//
-// MHR ANY:
-// Ascended Heroes = 1/540
-// Chaos Rising   = 1/956
-// Perfect Order  = 1/1786
-// Pitch Black    = approximately 1/1260-1370
-//
-// MHR SPECIFIC:
-// Ascended Heroes = 1/1080
-// Chaos Rising   = 1/956
-// Perfect Order  = 1/1786
-// Pitch Black    = approximately 1/1260-1370
-// ============================================================
-
-// ============================================================
-// CARD NAMES
+// CARD LISTS
+// Original/fan-made names
 // ============================================================
 
 let setCards = [
@@ -87,6 +61,7 @@ let setCards = [
         "Hero Voltiger",
         "Voltiger EX"
     ],
+
     [
         "Flamefang",
         "Aqua Titan",
@@ -99,6 +74,7 @@ let setCards = [
         "Chaos Fang EX",
         "Mega Chaos Rex"
     ],
+
     [
         "Orderfox",
         "Starclaw",
@@ -111,6 +87,7 @@ let setCards = [
         "Perfect Order EX",
         "Mega Order Rex"
     ],
+
     [
         "Shadowfang",
         "Nightfox",
@@ -145,36 +122,157 @@ scene.setBackgroundColor(9)
 
 game.splash(
     "CARD PACK SHOP",
-    "Open • Collect • Sell"
+    "OPEN • COLLECT • SELL"
 )
 
 showHome()
 
 // ============================================================
-// HOME
+// HOME SCREEN
 // ============================================================
 
 function showHome() {
+
     scene.setBackgroundColor(9)
 
     game.showLongText(
         "CARD PACK SHOP\n\n" +
-        "CASH: $" + money + "\n\n" +
-        "SET: " + setNames[currentSet] + "\n" +
-        "PACK: $" + packPrices[currentSet] + "\n\n" +
+        "CASH: $" + money +
+        "\n\nSET: " + setNames[currentSet] +
+        "\nPACK: $" + packPrices[currentSet] +
+        "\n\n" +
         "A = OPEN PACK\n" +
         "LEFT/RIGHT = CHANGE SET\n" +
         "B = COLLECTION\n" +
-        "MENU = STATS",
+        "MENU = SHOP / ODDS",
         DialogLayout.Full
     )
 }
 
 // ============================================================
-// CREATE PIXEL ART BOOSTER PACK
+// SHOP / SET SELECTION
 // ============================================================
 
-function makePack(): Sprite {
+controller.menu.onEvent(ControllerButtonEvent.Pressed, function () {
+
+    game.showLongText(
+        "SET SHOP\n\n" +
+        "LEFT/RIGHT: CHANGE SET\n" +
+        "A: OPEN PACK\n\n" +
+        "CURRENT:\n" +
+        setNames[currentSet] +
+        "\nPACK: $" +
+        packPrices[currentSet] +
+        "\n\n" +
+        getHitRateText(),
+        DialogLayout.Full
+    )
+})
+
+// ============================================================
+// CHANGE SET
+// ============================================================
+
+controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
+
+    currentSet -= 1
+
+    if (currentSet < 0) {
+        currentSet = setNames.length - 1
+    }
+
+    showSetCard()
+})
+
+controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
+
+    currentSet += 1
+
+    if (currentSet >= setNames.length) {
+        currentSet = 0
+    }
+
+    showSetCard()
+})
+
+function showSetCard() {
+
+    game.splash(
+        setNames[currentSet],
+        "PACK $" + packPrices[currentSet]
+    )
+}
+
+// ============================================================
+// HIT RATE DISPLAY
+// ============================================================
+
+function getHitRateText(): string {
+
+    if (currentSet == 0) {
+        return (
+            "SIR ANY: 1/70\n" +
+            "SIR SPECIFIC: 1/1533\n" +
+            "MHR ANY: 1/540\n" +
+            "MHR SPECIFIC: 1/1080"
+        )
+    }
+
+    if (currentSet == 1) {
+        return (
+            "SIR ANY: 1/83\n" +
+            "SIR SPECIFIC: 1/496\n" +
+            "MHR ANY: 1/956\n" +
+            "MHR SPECIFIC: 1/956"
+        )
+    }
+
+    if (currentSet == 2) {
+        return (
+            "SIR ANY: 1/81\n" +
+            "SIR SPECIFIC: 1/487\n" +
+            "MHR ANY: 1/1786\n" +
+            "MHR SPECIFIC: 1/1786"
+        )
+    }
+
+    return (
+        "SIR ANY: ~1/80-125\n" +
+        "SIR SPECIFIC: ~1/480-750\n" +
+        "MHR ANY: ~1/1260-1370\n" +
+        "MHR SPECIFIC: ~1/1260-1370"
+    )
+}
+
+// ============================================================
+// OPEN PACK
+// ============================================================
+
+controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
+
+    if (money < packPrices[currentSet]) {
+
+        game.splash(
+            "NOT ENOUGH CASH!",
+            "Need $" + packPrices[currentSet]
+        )
+
+        return
+    }
+
+    money -= packPrices[currentSet]
+
+    packsOpened += 1
+
+    openPack()
+})
+
+// ============================================================
+// PIXEL ART BOOSTER
+// ============================================================
+
+function makeBooster(): Sprite {
+
     let pack = sprites.create(img`
         . . . . . . . . . . . . . . . .
         . . . 2 2 2 2 2 2 2 2 2 2 . . .
@@ -200,157 +298,162 @@ function makePack(): Sprite {
 }
 
 // ============================================================
-// PACK CRINKLE ANIMATION
+// CRINKLE ANIMATION
 // ============================================================
 
-function crinklePack(pack: Sprite) {
-    // Shake left
-    pack.x -= 4
+function crinkle(pack: Sprite) {
+
+    music.playTone(262, music.beat(1))
+
+    pack.x -= 5
     pause(70)
 
-    // Shake right
-    pack.x += 8
+    music.playTone(330, music.beat(1))
+
+    pack.x += 10
     pause(70)
 
-    // Shake left
-    pack.x -= 8
+    music.playTone(262, music.beat(1))
+
+    pack.x -= 10
     pause(70)
 
-    // Shake right
-    pack.x += 6
+    music.playTone(392, music.beat(1))
+
+    pack.x += 10
     pause(70)
 
-    // Shake left
-    pack.x -= 4
+    music.playTone(330, music.beat(1))
+
+    pack.x -= 5
     pause(70)
 
-    // Little "crinkle" bounce
-    pack.y -= 3
-    pause(60)
+    // Little bounce
 
-    pack.y += 6
-    pause(60)
+    pack.y -= 4
+    pause(70)
 
-    pack.y -= 3
-    pause(60)
+    pack.y += 8
+    pause(70)
 
-    // Return to center
+    pack.y -= 4
+
+    pause(100)
+
     pack.setPosition(80, 60)
 }
 
 // ============================================================
-// OPEN PACK
+// TEAR PACK
 // ============================================================
 
-controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
-    if (money < packPrices[currentSet]) {
-        game.splash(
-            "NOT ENOUGH CASH!",
-            "Need $" + packPrices[currentSet]
-        )
-        return
-    }
+function tearPack(pack: Sprite) {
 
-    money -= packPrices[currentSet]
-    packsOpened += 1
+    music.playTone(523, music.beat(1))
+    pause(100)
 
-    openPack()
-})
+    music.playTone(659, music.beat(1))
+    pause(100)
 
-// ============================================================
-// OPENING SEQUENCE
-// ============================================================
-
-function openPack() {
-    scene.setBackgroundColor(1)
-
-    let pack = makePack()
-
-    game.splash(
-        "NEW PACK!",
-        setNames[currentSet]
-    )
-
-    crinklePack(pack)
-
-    game.splash(
-        "RIP!",
-        "Opening..."
-    )
+    music.playTone(784, music.beat(1))
+    pause(100)
 
     pack.destroy()
 
-    // Reveal five cards
+    // Sparkle burst
+    for (let i = 0; i < 8; i++) {
+
+        let sparkle = sprites.create(img`
+            . . 5 . .
+            . 5 5 5 .
+            5 5 5 5 5
+            . 5 5 5 .
+            . . 5 . .
+        `, SpriteKind.Sparkle)
+
+        sparkle.setPosition(
+            30 + randint(0, 100),
+            30 + randint(0, 60)
+        )
+
+        sparkle.lifespan = 400
+    }
+
+    music.playTone(988, music.beat(1))
+}
+
+// ============================================================
+// FULL PACK OPENING
+// ============================================================
+
+function openPack() {
+
+    scene.setBackgroundColor(1)
+
+    game.splash(
+        setNames[currentSet],
+        "GET READY!"
+    )
+
+    let pack = makeBooster()
+
+    pause(500)
+
+    game.showLongText(
+        "A = RIP OPEN!",
+        DialogLayout.Bottom
+    )
+
+    crinkle(pack)
+
+    pause(200)
+
+    tearPack(pack)
+
+    game.splash(
+        "PACK OPEN!",
+        "5 CARDS!"
+    )
+
+    pause(500)
+
+    // Five cards
     for (let i = 0; i < 5; i++) {
-        revealCard()
+
+        revealCard(i + 1)
+
         pause(700)
     }
 
     game.splash(
         "PACK COMPLETE!",
-        "5 cards collected!"
+        "Cards: " + cardsOwned
     )
 
     showHome()
 }
 
 // ============================================================
-// REVEAL CARD
+// RARITY ROLL
 // ============================================================
-
-function revealCard() {
-    let rarity = determineRarity()
-    let specific = false
-
-    // Check whether this is a specific chase hit
-    if (rarity == SIR) {
-        specific = rollSpecificSIR()
-    }
-
-    if (rarity == MHR) {
-        specific = rollSpecificMHR()
-    }
-
-    let name = chooseCardName(rarity, specific)
-    let value = getCardValue(rarity, specific)
-
-    currentCardName = name
-    currentCardRarity = rarity
-    currentCardValue = value
-    currentCardIsSpecific = specific
-
-    collection.push(name)
-    collectionValues.push(value)
-    collectionRarities.push(rarity)
-
-    cardsOwned += 1
-    collectionValue += value
-
-    showCard(name, rarity, value, specific)
-}
-
-// ============================================================
-// DETERMINE RARITY
 //
-// SIR and MHR are checked independently using the supplied
-// hit-rate information.
-//
-// IR / UR / Rare / Uncommon / Common fill the remaining slots.
+// MHR and SIR are rolled first.
+// The remaining cards use ordinary rarity categories.
 // ============================================================
 
 function determineRarity(): string {
 
-    // MHR first because it is the rarest category.
+    // MHR
     if (rollMHR()) {
         return MHR
     }
 
-    // SIR next.
+    // SIR
     if (rollSIR()) {
         return SIR
     }
 
-    // Remaining rarities.
+    // Other rarities
     let roll = randint(1, 100)
 
     if (roll <= 5) {
@@ -373,10 +476,11 @@ function determineRarity(): string {
 }
 
 // ============================================================
-// SIR HIT RATE
+// SIR HIT
 // ============================================================
 
 function rollSIR(): boolean {
+
     let denominator = 80
 
     if (currentSet == 0) {
@@ -392,7 +496,6 @@ function rollSIR(): boolean {
     }
 
     if (currentSet == 3) {
-        // Pitch Black range: 1/80-125
         denominator = randint(80, 125)
     }
 
@@ -400,11 +503,12 @@ function rollSIR(): boolean {
 }
 
 // ============================================================
-// MHR HIT RATE
+// MHR HIT
 // ============================================================
 
 function rollMHR(): boolean {
-    let denominator = 1260
+
+    let denominator = 1000
 
     if (currentSet == 0) {
         denominator = 540
@@ -419,7 +523,6 @@ function rollMHR(): boolean {
     }
 
     if (currentSet == 3) {
-        // Pitch Black range: 1/1260-1370
         denominator = randint(1260, 1370)
     }
 
@@ -431,6 +534,7 @@ function rollMHR(): boolean {
 // ============================================================
 
 function rollSpecificSIR(): boolean {
+
     let denominator = 500
 
     if (currentSet == 0) {
@@ -446,7 +550,6 @@ function rollSpecificSIR(): boolean {
     }
 
     if (currentSet == 3) {
-        // Pitch Black range: 1/480-750
         denominator = randint(480, 750)
     }
 
@@ -458,6 +561,7 @@ function rollSpecificSIR(): boolean {
 // ============================================================
 
 function rollSpecificMHR(): boolean {
+
     let denominator = 1000
 
     if (currentSet == 0) {
@@ -473,7 +577,6 @@ function rollSpecificMHR(): boolean {
     }
 
     if (currentSet == 3) {
-        // Pitch Black range: 1/1260-1370
         denominator = randint(1260, 1370)
     }
 
@@ -481,24 +584,81 @@ function rollSpecificMHR(): boolean {
 }
 
 // ============================================================
+// CARD REVEAL
+// ============================================================
+
+function revealCard(number: number) {
+
+    let rarity = determineRarity()
+
+    let specific = false
+
+    if (rarity == SIR) {
+        specific = rollSpecificSIR()
+    }
+
+    if (rarity == MHR) {
+        specific = rollSpecificMHR()
+    }
+
+    let name = chooseCard(
+        rarity,
+        specific
+    )
+
+    let value = getValue(
+        rarity,
+        specific
+    )
+
+    lastCardName = name
+    lastCardRarity = rarity
+    lastCardValue = value
+    lastCardSpecific = specific
+
+    collection.push(name)
+    collectionValues.push(value)
+    collectionRarities.push(rarity)
+
+    cardsOwned += 1
+    collectionValue += value
+
+    displayCard(
+        name,
+        rarity,
+        value,
+        specific,
+        number
+    )
+}
+
+// ============================================================
 // CHOOSE CARD
 // ============================================================
 
-function chooseCardName(rarity: string, specific: boolean): string {
+function chooseCard(
+    rarity: string,
+    specific: boolean
+): string {
+
     let cards = setCards[currentSet]
 
+    // Specific MHR chase
     if (rarity == MHR && specific) {
         return cards[9]
     }
 
+    // Other MHR
     if (rarity == MHR) {
         return cards[8]
     }
 
+    // Specific SIR chase
     if (rarity == SIR && specific) {
         return cards[8]
     }
 
+    // Other SIR
     if (rarity == SIR) {
         return cards[randint(6, 8)]
     }
@@ -523,10 +683,13 @@ function chooseCardName(rarity: string, specific: boolean): string {
 }
 
 // ============================================================
-// CARD VALUE
+// VALUES
 // ============================================================
 
-function getCardValue(rarity: string, specific: boolean): number {
+function getValue(
+    rarity: string,
+    specific: boolean
+): number {
 
     if (rarity == COMMON) {
         return randint(1, 3)
@@ -549,6 +712,7 @@ function getCardValue(rarity: string, specific: boolean): number {
     }
 
     if (rarity == SIR) {
+
         if (specific) {
             return randint(150, 300)
         }
@@ -557,6 +721,7 @@ function getCardValue(rarity: string, specific: boolean): number {
     }
 
     if (rarity == MHR) {
+
         if (specific) {
             return randint(400, 800)
         }
@@ -568,116 +733,113 @@ function getCardValue(rarity: string, specific: boolean): number {
 }
 
 // ============================================================
-// SHOW CARD
+// CARD DISPLAY
 // ============================================================
 
-function showCard(
+function displayCard(
     name: string,
     rarity: string,
     value: number,
-    specific: boolean
+    specific: boolean,
+    number: number
 ) {
 
-    let color = 1
+    let background = 1
 
     if (rarity == COMMON) {
-        color = 1
+        background = 1
     }
 
     if (rarity == UNCOMMON) {
-        color = 11
+        background = 11
     }
 
     if (rarity == RARE) {
-        color = 9
+        background = 9
     }
 
     if (rarity == ULTRA) {
-        color = 5
+        background = 5
     }
 
     if (rarity == IR) {
-        color = 7
+        background = 7
     }
 
     if (rarity == SIR) {
-        color = 13
+        background = 13
     }
 
     if (rarity == MHR) {
-        color = 2
+        background = 2
     }
 
-    scene.setBackgroundColor(color)
+    scene.setBackgroundColor(background)
+
+    // Rare animation
+    if (rarity == IR ||
+        rarity == SIR ||
+        rarity == MHR) {
+
+        for (let i = 0; i < 3; i++) {
+
+            music.playTone(
+                392 + i * 120,
+                music.beat(1)
+            )
+
+            pause(80)
+        }
+    }
 
     let extra = ""
 
     if (specific) {
-        extra = "\n*** CHASE HIT! ***"
+        extra = "\n\n*** CHASE HIT! ***"
     }
 
-    game.splash(
-        name,
+    game.showLongText(
+        "CARD " + number + " / 5\n\n" +
+        name +
+        "\n\n" +
         rarity +
-        "\nVALUE: $" +
+        "\n\nVALUE: $" +
         value +
-        extra
+        extra,
+        DialogLayout.Full
     )
 }
-
-// ============================================================
-// CHANGE SET
-// ============================================================
-
-controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
-    currentSet -= 1
-
-    if (currentSet < 0) {
-        currentSet = setNames.length - 1
-    }
-
-    game.splash(
-        setNames[currentSet],
-        "Pack $" + packPrices[currentSet]
-    )
-})
-
-controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
-    currentSet += 1
-
-    if (currentSet >= setNames.length) {
-        currentSet = 0
-    }
-
-    game.splash(
-        setNames[currentSet],
-        "Pack $" + packPrices[currentSet]
-    )
-})
 
 // ============================================================
 // COLLECTION
 // ============================================================
 
 controller.B.onEvent(ControllerButtonEvent.Pressed, function () {
+
+    if (collection.length == 0) {
+
+        game.splash(
+            "COLLECTION EMPTY",
+            "Open a pack!"
+        )
+
+        return
+    }
+
     showCollection()
 })
 
 function showCollection() {
 
-    if (collection.length == 0) {
-        game.splash(
-            "COLLECTION EMPTY",
-            "Open some packs!"
-        )
-        return
-    }
-
     let text = "COLLECTION\n\n"
 
-    let start = Math.max(0, collection.length - 10)
+    let start = Math.max(
+        0,
+        collection.length - 10
+    )
 
     for (let i = start; i < collection.length; i++) {
+
         text += collection[i]
         text += "\n"
         text += collectionRarities[i]
@@ -686,9 +848,13 @@ function showCollection() {
         text += "\n\n"
     }
 
-    text += "CARDS: " + cardsOwned
-    text += "\nVALUE: $" + collectionValue
-    text += "\nCASH: $" + money
+    text +=
+        "CARDS: " +
+        cardsOwned +
+        "\nVALUE: $" +
+        collectionValue +
+        "\nCASH: $" +
+        money
 
     game.showLongText(
         text,
@@ -697,26 +863,30 @@ function showCollection() {
 }
 
 // ============================================================
-// SELL CURRENT CARD
+// SELL MOST RECENT CARD
 //
-// Pressing B opens collection. The most recently pulled card
-// can be sold from the sell screen.
+// Pressing down from the collection screen isn't available
+// in this simple version, so the last card can be sold from
+// the sell option below.
 // ============================================================
 
 function sellLastCard() {
 
     if (collection.length == 0) {
+
         game.splash(
             "NOTHING TO SELL",
-            "Open a pack!"
+            "Open some packs!"
         )
+
         return
     }
 
     let index = collection.length - 1
 
     let answer = game.ask(
-        "SELL " + collection[index] +
+        "SELL " +
+        collection[index] +
         " FOR $" +
         collectionValues[index] +
         "?"
@@ -726,7 +896,8 @@ function sellLastCard() {
 
         money += collectionValues[index]
 
-        collectionValue -= collectionValues[index]
+        collectionValue -=
+            collectionValues[index]
 
         collection.removeAt(index)
         collectionValues.removeAt(index)
@@ -736,62 +907,20 @@ function sellLastCard() {
 
         game.splash(
             "SOLD!",
-            "Cash: $" + money
+            "CASH: $" + money
         )
     }
 }
 
 // ============================================================
-// MENU = STATS + HIT RATES
+// SELL LAST CARD WITH DOWN BUTTON
 // ============================================================
 
-controller.menu.onEvent(ControllerButtonEvent.Pressed, function () {
+controller.down.onEvent(
+    ControllerButtonEvent.Pressed,
+    function () {
 
-    let hitText = ""
-
-    if (currentSet == 0) {
-        hitText =
-            "SIR ANY: 1/70\n" +
-            "SIR SPECIFIC: 1/1533\n" +
-            "MHR ANY: 1/540\n" +
-            "MHR SPECIFIC: 1/1080"
+        sellLastCard()
     }
-
-    if (currentSet == 1) {
-        hitText =
-            "SIR ANY: 1/83\n" +
-            "SIR SPECIFIC: 1/496\n" +
-            "MHR ANY: 1/956\n" +
-            "MHR SPECIFIC: 1/956"
-    }
-
-    if (currentSet == 2) {
-        hitText =
-            "SIR ANY: 1/81\n" +
-            "SIR SPECIFIC: 1/487\n" +
-            "MHR ANY: 1/1786\n" +
-            "MHR SPECIFIC: 1/1786"
-    }
-
-    if (currentSet == 3) {
-        hitText =
-            "SIR ANY: 1/80-125\n" +
-            "SIR SPECIFIC: 1/480-750\n" +
-            "MHR ANY: 1/1260-1370\n" +
-            "MHR SPECIFIC: 1/1260-1370"
-    }
-
-    game.showLongText(
-        "SHOP STATS\n\n" +
-        "CASH: $" + money + "\n" +
-        "PACKS: " + packsOpened + "\n" +
-        "CARDS: " + cardsOwned + "\n" +
-        "COLLECTION: $" + collectionValue +
-        "\n\n" +
-        setNames[currentSet] +
-        "\n\n" +
-        hitText,
-        DialogLayout.Full
-    )
-})
+)
 ```
