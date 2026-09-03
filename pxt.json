@@ -7,8 +7,5 @@
     "files": [
         "main.ts"
     ],
-    "preferredEditor": "tsprj",
-    "supportedTargets": [
-        "arcade"
-    ]
+    "preferredEditor": "tsprj"
 }
