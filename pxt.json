@@ -5,10 +5,15 @@
         "device": "*"
     },
     "files": [
-        "main.ts"
+        "main.ts",
+        "main.py"
     ],
-    "preferredEditor": "tsprj",
+    "targetVersions": {
+        "target": "4.1.17",
+        "targetId": "arcade"
+    },
     "supportedTargets": [
         "arcade"
-    ]
+    ],
+    "preferredEditor": "pyprj"
 }
