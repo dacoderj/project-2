@@ -1,6 +1,4 @@
-from pathlib import Path
-
-main_ts = r'''let money = 100
+let money = 100
 let packs = 0
 let setNumber = 0
 let busy = false
@@ -729,37 +727,3 @@ function getBaseValue(rarity: string): number {
 
     return 1
 }
-'''
-
-instructions = """CARD PACK SHOP - DRAFT 1.4
-
-1. In MakeCode Arcade, click main.ts.
-2. Select all of the existing code and replace it with the contents of main.ts from this package.
-3. If main.py still exists, delete it so MakeCode does not try to treat TypeScript as Python.
-4. Do not replace pxt.json unless you intentionally changed your project extensions.
-
-Controls:
-A on home       = Open a pack
-B on home       = Open collection
-Left / Right    = Change card set
-Menu            = Open marketplace
-
-Collection:
-Up / Down       = Select a card
-A               = Sell selected card at current market value
-B               = Return home
-
-Marketplace:
-Menu or A       = Return home
-
-Market values change after every pack is opened.
-"""
-
-out_dir = Path("/mnt/data/card-pack-shop-v1.4")
-out_dir.mkdir(exist_ok=True)
-(out_dir / "main.ts").write_text(main_ts)
-(out_dir / "README.txt").write_text(instructions)
-
-print("Created:")
-print(out_dir / "main.ts")
-print(out_dir / "README.txt")
