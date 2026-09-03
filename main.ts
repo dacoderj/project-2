@@ -35,11 +35,6 @@ game.splash("CARD PACK SHOP", "DRAFT 1.4")
 updateSet()
 showHome()
 
-
-// --------------------------------------------------
-// SET INFORMATION
-// --------------------------------------------------
-
 function updateSet() {
     if (setNumber == 0) {
         setName = "ASCENDED HEROES"
@@ -55,11 +50,6 @@ function updateSet() {
         packPrice = 18
     }
 }
-
-
-// --------------------------------------------------
-// HOME SCREEN
-// --------------------------------------------------
 
 function showHome() {
     busy = false
@@ -106,11 +96,6 @@ function drawHome() {
     screen.print("B  COLLECTION", 10, 107, 1, image.font5)
     screen.print("< > CHANGE SET", 10, 115, 1, image.font5)
 }
-
-
-// --------------------------------------------------
-// CONTROLS
-// --------------------------------------------------
 
 controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
     if (busy) {
@@ -177,19 +162,16 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
         return
     }
 
-    // SELL SELECTED CARD
     if (screenMode == 1) {
         sellSelectedCard()
         return
     }
 
-    // LEAVE MARKETPLACE
     if (screenMode == 2) {
         showHome()
         return
     }
 
-    // OPEN PACK
     if (money < packPrice) {
         game.splash("NOT ENOUGH CASH", "Need $" + packPrice)
         return
@@ -230,11 +212,6 @@ controller.menu.onEvent(ControllerButtonEvent.Pressed, function () {
         screenMode = 2
     }
 })
-
-
-// --------------------------------------------------
-// COLLECTION
-// --------------------------------------------------
 
 function addCardToCollection(rarity: string, value: number) {
     collectionSets.push(setName)
@@ -431,11 +408,6 @@ function shortRarity(rarity: string): string {
     return rarity
 }
 
-
-// --------------------------------------------------
-// MARKETPLACE
-// --------------------------------------------------
-
 function updateMarket() {
     commonMarket = randint(70, 130)
     uncommonMarket = randint(70, 140)
@@ -510,11 +482,6 @@ function drawMarketRow(label: string, percent: number, y: number) {
     screen.print("" + percent + "%", 112, y, 7, image.font5)
 }
 
-
-// --------------------------------------------------
-// PACK SPRITE
-// --------------------------------------------------
-
 function makePack(): Sprite {
     let pack = sprites.create(img`
         . . 2 2 2 2 2 2 2 2 2 2 2 2 . .
@@ -559,11 +526,6 @@ function crinkle(pack: Sprite) {
     pack.x = 80
 }
 
-
-// --------------------------------------------------
-// OPEN PACK
-// --------------------------------------------------
-
 function openPack() {
     busy = true
 
@@ -601,7 +563,6 @@ function openPack() {
     revealCard(4)
     revealCard(5)
 
-    // MARKET MOVES AFTER EACH PACK
     updateMarket()
 
     game.splash(
@@ -611,11 +572,6 @@ function openPack() {
 
     showHome()
 }
-
-
-// --------------------------------------------------
-// CARD REVEAL
-// --------------------------------------------------
 
 function revealCard(number: number) {
     let roll = randint(1, 100)
@@ -661,7 +617,6 @@ function revealCard(number: number) {
 
     let cardValue = getBaseValue(rarity)
 
-    // SAVE CARD
     addCardToCollection(rarity, cardValue)
 
     scene.setBackgroundColor(1)
